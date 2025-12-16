@@ -1,0 +1,99 @@
+# SUE Improved Configuration for Flickr30k
+
+# Data settings
+data:
+  dataset_name: "flickr30k"
+  data_path: "../data/flickr30/flickr30/"
+  n_test: 400
+  n_parallel: 500  # Number of paired samples for CCA
+
+# Model settings
+model:
+  n_components: 8  # Final embedding dimension
+  n_spectral_dim: 30  # SpectralNet output dimension
+  
+  # SpectralNet architecture
+  spectralnet:
+    modality1:
+      input_dim: 768  # DINO features
+      hidden_dims: [4096, 4096, 1024]
+      output_dim: 30
+    modality2:
+      input_dim: 2048  # Text features
+      hidden_dims: [4096, 4096, 1024]
+      output_dim: 30
+
+# Graph construction settings (Innovation 1 & 2)
+graph:
+  # Method: 'knn' (baseline), 'quadratic_ot' (innovation 1)
+  method: "quadratic_ot"
+  
+  # k-NN baseline settings
+  knn:
+    n_neighbors: 30
+    scale_k: 15
+    is_local_scale: false
+  
+  # Quadratic OT settings (Innovation 1)
+  quadratic_ot:
+    epsilon: 0.1  # Regularization coefficient
+    max_iter: 100  # Max iterations for optimization
+    tol: 1e-6  # Convergence tolerance
+    symmetric: true  # Symmetric graph
+    
+  # Laplacian normalization (Innovation 2)
+  laplacian:
+    # Method: 'unnormalized', 'symmetric', 'random_walk', 'doubly_stochastic'
+    normalization: "doubly_stochastic"
+    sinkhorn_iter: 50  # Max Sinkhorn iterations
+    sinkhorn_tol: 1e-6  # Sinkhorn convergence tolerance
+
+# Training settings
+training:
+  # SpectralNet training
+  spectral:
+    epochs: 100
+    batch_size: 5162
+    lr: 1e-4
+    lr_decay: 0.1
+    min_lr: 1e-8
+    patience: 10
+    
+  # MMD fine-tuning
+  mmd:
+    epochs: 100
+    batch_size: 32
+    lr: 1e-3
+    n_scales: 3
+    val_split: 0.1
+
+# Device settings
+device:
+  auto_detect: true
+  preferred_device: "cuda:0"
+
+# Evaluation settings
+evaluation:
+  recall_k: [1, 5, 10]
+  compute_mrr: true
+  compute_map: true
+  compute_cka: true
+  compute_procrustes: true
+  knn_preservation_k: 10
+
+# Visualization settings
+visualization:
+  enabled: true
+  method: "tsne"  # 'tsne' or 'umap'
+  n_samples: 1000  # Number of samples for visualization
+  save_path: "./outputs/visualizations/"
+  
+# Logging settings
+logging:
+  level: "INFO"
+  save_path: "./outputs/logs/"
+  
+# Checkpoint settings
+checkpoint:
+  save_path: "./checkpoints/"
+  save_best: true
